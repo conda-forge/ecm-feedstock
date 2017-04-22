@@ -10,7 +10,7 @@ source:
   sha256: 0cf7b3eee8462cc6f98b418b47630e1eb6b3f4f8c3fc1fb005b08e2a1811ba43
 
 build:
-  number: 0
+  number: 1
   skip: true        # [win]
 
 requirements:
@@ -18,9 +18,9 @@ requirements:
     - toolchain
     - autoconf       # [linux]
     - m4
-    - gmp
+    - gmp >=5.0.1,<7
   run:
-    - gmp
+    - gmp >=5.0.1,<7
 
 test:
   commands:

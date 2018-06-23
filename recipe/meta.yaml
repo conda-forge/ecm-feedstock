@@ -15,12 +15,13 @@ build:
 
 requirements:
   build:
-    - toolchain
     - autoconf       # [linux]
+    - {{ compiler('c') }}
+  host:
     - m4
-    - gmp >=5.0.1,<7
+    - gmp
   run:
-    - gmp >=5.0.1,<7
+    - gmp
 
 test:
   commands:

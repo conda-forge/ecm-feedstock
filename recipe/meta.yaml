@@ -10,15 +10,15 @@ source:
   sha256: 0cf7b3eee8462cc6f98b418b47630e1eb6b3f4f8c3fc1fb005b08e2a1811ba43
 
 build:
-  number: 1
+  number: 2
   skip: true        # [win]
 
 requirements:
   build:
     - autoconf       # [linux]
+    - m4
     - {{ compiler('c') }}
   host:
-    - m4
     - gmp
   run:
     - gmp

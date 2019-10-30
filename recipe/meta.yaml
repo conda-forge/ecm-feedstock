@@ -17,6 +17,7 @@ requirements:
   build:
     - autoconf       # [linux]
     - m4
+    - make
     - {{ compiler('c') }}
   host:
     - gmp

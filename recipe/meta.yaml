@@ -18,6 +18,7 @@ requirements:
     - autoconf       # [linux]
     - m4
     - make
+    - libtool  # [unix]
     - {{ compiler('c') }}
   host:
     - gmp

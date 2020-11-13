@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Get an updated config.sub and config.guess
+cp $BUILD_PREFIX/share/libtool/build-aux/config.* .
 
 export LD_LIBRARY_PATH=$PREFIX/lib:$LD_LIBRARY_PATH
 
@@ -15,6 +17,8 @@ make
 chmod +x test.pp1
 chmod +x test.pm1
 chmod +x test.ecm
+if [[ "${CONDA_BUILD_CROSS_COMPILATION}" != "1" ]]; then
 make check
+fi
 
 make install

@@ -1,4 +1,4 @@
-{% set version = "7.0.4" %}
+{% set version = "7.0.5" %}
 
 package:
   name: ecm
@@ -6,12 +6,20 @@ package:
 
 source:
   fn: ecm-{{ version }}.tar.gz
-  url: https://gforge.inria.fr/frs/download.php/latestfile/160/ecm-{{ version }}.tar.gz
-  sha256: 0cf7b3eee8462cc6f98b418b47630e1eb6b3f4f8c3fc1fb005b08e2a1811ba43
+  # Unfortunately, the automatically generated tarball from GitLab (which has a
+  # stable URL) does not have the same contents as the manually uploaded one,
+  # so we need to find each new release manually on
+  # https://gitlab.inria.fr/zimmerma/ecm/-/releases
+  url: https://gitlab.inria.fr/zimmerma/ecm/uploads/89f6f0d65d3e980cef33dc922004e4b2/ecm-7.0.5.tar.gz
+  sha256: c721dd22e557c4a5dac9ac7e156a400cd2298812dd1f9b56e89966de01471ba8
 
 build:
-  number: 1002
+  number: 0
   skip: true        # [win]
+  run_exports:
+    # We are not sure if there can be breaking ABI changes in ecm. (There were
+    # none in the last few patch releases at least.)
+    - {{ pin_subpackage("ecm", max_pin="x.x") }}
 
 requirements:
   build:
@@ -22,8 +30,6 @@ requirements:
     - {{ compiler('c') }}
   host:
     - gmp
-  run:
-    - gmp
 
 test:
   commands:
@@ -33,11 +39,14 @@ test:
     - test -f $PREFIX/lib/libecm.dylib      # [osx]
 
 about:
-  home: https://gforge.inria.fr/projects/ecm/
-  license: GPL v3 and LGPL v3
-  license_file: COPYING
+  home: https://gitlab.inria.fr/zimmerma/ecm
+  license: LGPL-3.0-or-later
+  license_file:
+    - COPYING
+    - COPYING.LIB
   summary: 'Elliptic Curve Method for Integer Factorization'
 
 extra:
   recipe-maintainers:
     - isuruf
+    - saraedum

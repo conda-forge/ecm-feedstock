@@ -37,9 +37,11 @@ test:
     - test -f $PREFIX/lib/libecm.dylib      # [osx]
 
 about:
-  home: https://gforge.inria.fr/projects/ecm/
-  license: GPL v3 and LGPL v3
-  license_file: COPYING
+  home: https://gitlab.inria.fr/zimmerma/ecm
+  license: LGPL-3.0-or-later
+  license_file:
+    - COPYING
+    - COPYING.LIB
   summary: 'Elliptic Curve Method for Integer Factorization'
 
 extra:

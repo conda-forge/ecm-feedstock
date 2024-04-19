@@ -14,8 +14,12 @@ source:
   sha256: 6fc7147988205740e9339776396a581497ba3df9431a343bc1863859d47a8bb4
 
 build:
-  number: 1002
+  number: 1003
   skip: true        # [win]
+  run_exports:
+    # We are not sure if there can be breaking ABI changes in ecm. (There were
+    # none in the last few patch releases at least.)
+    - {{ pin_subpackage("ecm", max_pin="x.x") }}
 
 requirements:
   build:
@@ -25,8 +29,6 @@ requirements:
     - libtool  # [unix]
     - {{ compiler('c') }}
   host:
-    - gmp
-  run:
     - gmp
 
 test:

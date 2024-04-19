@@ -6,8 +6,12 @@ package:
 
 source:
   fn: ecm-{{ version }}.tar.gz
-  url: https://gforge.inria.fr/frs/download.php/latestfile/160/ecm-{{ version }}.tar.gz
-  sha256: 0cf7b3eee8462cc6f98b418b47630e1eb6b3f4f8c3fc1fb005b08e2a1811ba43
+  # Unfortunately, the automatically generated tarball from GitLab (which has a
+  # stable URL) does not have the same contents as the manually uploaded one,
+  # so we need to find each new release manually on
+  # https://gitlab.inria.fr/zimmerma/ecm/-/releases
+  url: https://gitlab.inria.fr/zimmerma/ecm/uploads/00c4c691a1ef8605b65bdf794a71539d/ecm-7.0.4.tar.gz
+  sha256: 6fc7147988205740e9339776396a581497ba3df9431a343bc1863859d47a8bb4
 
 build:
   number: 1002

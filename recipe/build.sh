@@ -18,7 +18,7 @@ chmod +x test.pp1
 chmod +x test.pm1
 chmod +x test.ecm
 if [[ "${CONDA_BUILD_CROSS_COMPILATION}" != "1" ]]; then
-make check
+  make check || (cat test-suite.log; exit 1)
 fi
 
 make install

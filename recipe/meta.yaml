@@ -12,6 +12,8 @@ source:
   # https://gitlab.inria.fr/zimmerma/ecm/-/releases
   url: https://gitlab.inria.fr/-/project/24244/uploads/0cfe6c56d11fc01c98a193fabdbd015c/ecm-7.0.7.tar.gz
   sha256: 0e8642ab03e8b0fcd9da63249ba0e870c4918fee8df87caf63eff9038176ab6e
+  patches:
+    - 0001-Work-around-https-github.com-llvm-llvm-project-pull-.patch
 
 build:
   number: 0

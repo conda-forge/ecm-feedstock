@@ -1,0 +1,1732 @@
+From 4656878f3c179426b9dce8727ff35b53c98fb6b7 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Julian=20R=C3=BCth?= <julian.rueth@fsfe.org>
+Date: Fri, 6 Nov 2026 01:46:43 -0600
+Subject: [PATCH] Work around https://github.com/llvm/llvm-project/pull/165129
+ which breaks ASM on Clang 21 targeting macOS
+
+---
+ x86_64/mulredc1.asm    | 10 +++++-----
+ x86_64/mulredc10.asm   | 14 +++++++-------
+ x86_64/mulredc11.asm   | 14 +++++++-------
+ x86_64/mulredc12.asm   | 14 +++++++-------
+ x86_64/mulredc13.asm   | 14 +++++++-------
+ x86_64/mulredc14.asm   | 14 +++++++-------
+ x86_64/mulredc15.asm   | 14 +++++++-------
+ x86_64/mulredc16.asm   | 14 +++++++-------
+ x86_64/mulredc17.asm   | 14 +++++++-------
+ x86_64/mulredc18.asm   | 14 +++++++-------
+ x86_64/mulredc19.asm   | 14 +++++++-------
+ x86_64/mulredc1_10.asm |  8 ++++----
+ x86_64/mulredc1_11.asm |  8 ++++----
+ x86_64/mulredc1_12.asm |  8 ++++----
+ x86_64/mulredc1_13.asm |  8 ++++----
+ x86_64/mulredc1_14.asm |  8 ++++----
+ x86_64/mulredc1_15.asm |  8 ++++----
+ x86_64/mulredc1_16.asm |  8 ++++----
+ x86_64/mulredc1_17.asm |  8 ++++----
+ x86_64/mulredc1_18.asm |  8 ++++----
+ x86_64/mulredc1_19.asm |  8 ++++----
+ x86_64/mulredc1_2.asm  |  8 ++++----
+ x86_64/mulredc1_20.asm |  8 ++++----
+ x86_64/mulredc1_3.asm  |  8 ++++----
+ x86_64/mulredc1_4.asm  |  8 ++++----
+ x86_64/mulredc1_5.asm  |  8 ++++----
+ x86_64/mulredc1_6.asm  |  8 ++++----
+ x86_64/mulredc1_7.asm  |  8 ++++----
+ x86_64/mulredc1_8.asm  |  8 ++++----
+ x86_64/mulredc1_9.asm  |  8 ++++----
+ x86_64/mulredc2.asm    | 14 +++++++-------
+ x86_64/mulredc20.asm   | 14 +++++++-------
+ x86_64/mulredc3.asm    | 14 +++++++-------
+ x86_64/mulredc4.asm    | 14 +++++++-------
+ x86_64/mulredc5.asm    | 14 +++++++-------
+ x86_64/mulredc6.asm    | 14 +++++++-------
+ x86_64/mulredc7.asm    | 14 +++++++-------
+ x86_64/mulredc8.asm    | 14 +++++++-------
+ x86_64/mulredc9.asm    | 14 +++++++-------
+ 39 files changed, 214 insertions(+), 214 deletions(-)
+
+diff --git a/x86_64/mulredc1.asm b/x86_64/mulredc1.asm
+index 7d72aed..6fb3378 100644
+--- a/x86_64/mulredc1.asm
++++ b/x86_64/mulredc1.asm
+@@ -1,18 +1,18 @@
+-#
++
+ #  mp_limb_t mulredc1(mp_limb_t * z, const mp_limb_t x, const mp_limb_t y,
+ #                 const mp_limb_t m, mp_limb_t inv_m)
+-#
++
+ #  Compute z := x*y mod m, in Montgomery representation, where x, y < m
+ #  and m is n limb wide.  inv_m is the less significant limb of the
+ #  inverse of m modulo 2^(n*GMP_LIMB_BITS)
+-#
++
+ #  The result might be unreduced (larger than m) but becomes reduced
+ #  after subtracting m. The calling function should take care of that.
+-#
++
+ #  We use a temporary space for unreduced product on the stack.
+ #  Therefore, this can not be used for large integers (anyway, the
+ #  algorithm is quadratic).
+-#
++
+ #  WARNING: z is only n limbs but since it might be unreduced, there
+ #  could be a carry that does not fit in z. This carry is returned.
+ 
+diff --git a/x86_64/mulredc10.asm b/x86_64/mulredc10.asm
+index c589780..aab97f7 100644
+--- a/x86_64/mulredc10.asm
++++ b/x86_64/mulredc10.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc10(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$88, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -474,9 +474,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 80(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -506,7 +506,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc11.asm b/x86_64/mulredc11.asm
+index 8e581b8..b7f9b07 100644
+--- a/x86_64/mulredc11.asm
++++ b/x86_64/mulredc11.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc11(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$96, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -512,9 +512,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 88(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -544,7 +544,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc12.asm b/x86_64/mulredc12.asm
+index 0f9dccc..cfc7acc 100644
+--- a/x86_64/mulredc12.asm
++++ b/x86_64/mulredc12.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc12(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$104, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -550,9 +550,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 96(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -582,7 +582,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc13.asm b/x86_64/mulredc13.asm
+index 6a8e267..4dd9a4d 100644
+--- a/x86_64/mulredc13.asm
++++ b/x86_64/mulredc13.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc13(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$112, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -588,9 +588,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 104(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -620,7 +620,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc14.asm b/x86_64/mulredc14.asm
+index a0e4ef4..9f89fbd 100644
+--- a/x86_64/mulredc14.asm
++++ b/x86_64/mulredc14.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc14(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$120, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -626,9 +626,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 112(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -658,7 +658,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc15.asm b/x86_64/mulredc15.asm
+index 9ab69c2..2074297 100644
+--- a/x86_64/mulredc15.asm
++++ b/x86_64/mulredc15.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc15(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$128, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -664,9 +664,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 120(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -696,7 +696,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc16.asm b/x86_64/mulredc16.asm
+index 4f2b911..d7d10e6 100644
+--- a/x86_64/mulredc16.asm
++++ b/x86_64/mulredc16.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc16(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$136, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -702,9 +702,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 128(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -734,7 +734,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc17.asm b/x86_64/mulredc17.asm
+index f215156..00eb774 100644
+--- a/x86_64/mulredc17.asm
++++ b/x86_64/mulredc17.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc17(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$144, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -740,9 +740,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 136(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -772,7 +772,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc18.asm b/x86_64/mulredc18.asm
+index 6f2eae8..6bc7049 100644
+--- a/x86_64/mulredc18.asm
++++ b/x86_64/mulredc18.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc18(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$152, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -778,9 +778,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 144(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -810,7 +810,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc19.asm b/x86_64/mulredc19.asm
+index 2f8b256..ffee8f7 100644
+--- a/x86_64/mulredc19.asm
++++ b/x86_64/mulredc19.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc19(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$160, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -816,9 +816,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 152(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -848,7 +848,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc1_10.asm b/x86_64/mulredc1_10.asm
+index 56d5d0a..80c91e0 100644
+--- a/x86_64/mulredc1_10.asm
++++ b/x86_64/mulredc1_10.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_10(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_10:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_11.asm b/x86_64/mulredc1_11.asm
+index 548afe3..2a629aa 100644
+--- a/x86_64/mulredc1_11.asm
++++ b/x86_64/mulredc1_11.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_11(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_11:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_12.asm b/x86_64/mulredc1_12.asm
+index e611a33..58f913b 100644
+--- a/x86_64/mulredc1_12.asm
++++ b/x86_64/mulredc1_12.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_12(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_12:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_13.asm b/x86_64/mulredc1_13.asm
+index aa03645..b86bf4f 100644
+--- a/x86_64/mulredc1_13.asm
++++ b/x86_64/mulredc1_13.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_13(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_13:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_14.asm b/x86_64/mulredc1_14.asm
+index 9c50c6a..892462d 100644
+--- a/x86_64/mulredc1_14.asm
++++ b/x86_64/mulredc1_14.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_14(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_14:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_15.asm b/x86_64/mulredc1_15.asm
+index ce88b50..8b9807f 100644
+--- a/x86_64/mulredc1_15.asm
++++ b/x86_64/mulredc1_15.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_15(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_15:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_16.asm b/x86_64/mulredc1_16.asm
+index 98c4445..657c0c0 100644
+--- a/x86_64/mulredc1_16.asm
++++ b/x86_64/mulredc1_16.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_16(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_16:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_17.asm b/x86_64/mulredc1_17.asm
+index b99f28d..ba5cd50 100644
+--- a/x86_64/mulredc1_17.asm
++++ b/x86_64/mulredc1_17.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_17(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_17:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_18.asm b/x86_64/mulredc1_18.asm
+index 9b904be..968bb8d 100644
+--- a/x86_64/mulredc1_18.asm
++++ b/x86_64/mulredc1_18.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_18(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_18:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_19.asm b/x86_64/mulredc1_19.asm
+index 3efcd3d..8c60296 100644
+--- a/x86_64/mulredc1_19.asm
++++ b/x86_64/mulredc1_19.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_19(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_19:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_2.asm b/x86_64/mulredc1_2.asm
+index 0f9eff0..bc6e6a0 100644
+--- a/x86_64/mulredc1_2.asm
++++ b/x86_64/mulredc1_2.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_2(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_2:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_20.asm b/x86_64/mulredc1_20.asm
+index 5d4f41e..3006b0f 100644
+--- a/x86_64/mulredc1_20.asm
++++ b/x86_64/mulredc1_20.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_20(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_20:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_3.asm b/x86_64/mulredc1_3.asm
+index 20d29be..ff72324 100644
+--- a/x86_64/mulredc1_3.asm
++++ b/x86_64/mulredc1_3.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_3(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_3:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_4.asm b/x86_64/mulredc1_4.asm
+index f6c9feb..a7e2040 100644
+--- a/x86_64/mulredc1_4.asm
++++ b/x86_64/mulredc1_4.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_4(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_4:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_5.asm b/x86_64/mulredc1_5.asm
+index 95cb00e..71dc3db 100644
+--- a/x86_64/mulredc1_5.asm
++++ b/x86_64/mulredc1_5.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_5(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_5:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_6.asm b/x86_64/mulredc1_6.asm
+index adbe743..0e7b5df 100644
+--- a/x86_64/mulredc1_6.asm
++++ b/x86_64/mulredc1_6.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_6(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_6:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_7.asm b/x86_64/mulredc1_7.asm
+index 5a9eb9c..8ebb6c9 100644
+--- a/x86_64/mulredc1_7.asm
++++ b/x86_64/mulredc1_7.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_7(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_7:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_8.asm b/x86_64/mulredc1_8.asm
+index 7eddec0..25d3c60 100644
+--- a/x86_64/mulredc1_8.asm
++++ b/x86_64/mulredc1_8.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_8(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_8:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc1_9.asm b/x86_64/mulredc1_9.asm
+index 0add8b4..bd2e203 100644
+--- a/x86_64/mulredc1_9.asm
++++ b/x86_64/mulredc1_9.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc1_9(mp_limb_t * z, const mp_limb_t x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -50,9 +50,9 @@ define(`ZP', `%rdi')dnl		# register that holds z
+ GSYM_PREFIX`'mulredc1_9:
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ `#' register values at loop entry: YP = y, MP = m
+ 
+@@ -88,7 +88,7 @@ ifdef(`WINDOWS64_ABI',
+ 	mulq	(MP)			# multipy u*m[0]
+ 	addq	%rax, T0		# Now %T0 = 0, need not be stored
+ 	movq	8(YP), %rax		# Fetch y[1]
+-	adcq	%rdx, T1		# 
++	adcq	%rdx, T1
+ 	setc	CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+diff --git a/x86_64/mulredc2.asm b/x86_64/mulredc2.asm
+index 4462be0..b26c7a7 100644
+--- a/x86_64/mulredc2.asm
++++ b/x86_64/mulredc2.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc2(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$24, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -170,9 +170,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 16(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -202,7 +202,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc20.asm b/x86_64/mulredc20.asm
+index ff13231..1405c68 100644
+--- a/x86_64/mulredc20.asm
++++ b/x86_64/mulredc20.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc20(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$168, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -854,9 +854,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 160(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -886,7 +886,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc3.asm b/x86_64/mulredc3.asm
+index e8f2f10..80baf5d 100644
+--- a/x86_64/mulredc3.asm
++++ b/x86_64/mulredc3.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc3(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$32, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -208,9 +208,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 24(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -240,7 +240,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc4.asm b/x86_64/mulredc4.asm
+index 1e641e1..c09ec97 100644
+--- a/x86_64/mulredc4.asm
++++ b/x86_64/mulredc4.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc4(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$40, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -246,9 +246,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 32(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -278,7 +278,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc5.asm b/x86_64/mulredc5.asm
+index bcaa216..0084d44 100644
+--- a/x86_64/mulredc5.asm
++++ b/x86_64/mulredc5.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc5(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$48, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -284,9 +284,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 40(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -316,7 +316,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc6.asm b/x86_64/mulredc6.asm
+index da95db2..255d61f 100644
+--- a/x86_64/mulredc6.asm
++++ b/x86_64/mulredc6.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc6(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$56, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -322,9 +322,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 48(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -354,7 +354,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc7.asm b/x86_64/mulredc7.asm
+index d58a39a..ae9efc7 100644
+--- a/x86_64/mulredc7.asm
++++ b/x86_64/mulredc7.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc7(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$64, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -360,9 +360,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 56(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -392,7 +392,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc8.asm b/x86_64/mulredc8.asm
+index 7944cc0..ff2e669 100644
+--- a/x86_64/mulredc8.asm
++++ b/x86_64/mulredc8.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc8(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$72, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -398,9 +398,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 64(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -430,7 +430,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+diff --git a/x86_64/mulredc9.asm b/x86_64/mulredc9.asm
+index 537c60c..e57374c 100644
+--- a/x86_64/mulredc9.asm
++++ b/x86_64/mulredc9.asm
+@@ -1,6 +1,6 @@
+ # mp_limb_t mulredc9(mp_limb_t * z, const mp_limb_t * x, const mp_limb_t * y,
+ #                 const mp_limb_t *m, mp_limb_t inv_m);
+-#
++
+ # Linux:   z: %rdi, x: %rsi, y: %rdx, m: %rcx, inv_m: %r8
+ #          Needs %rbx, %rsp, %rbp, %r12-%r15 restored
+ # Windows: z: %rcx, x: %rdx, y: %r8,  m: %r9, inv_m: 28(%rsp)
+@@ -108,9 +108,9 @@ ifdef(`WINDOWS64_ABI',
+ 	subq	$80, %rsp	# subtract size of local vars
+ 
+ 
+-#########################################################################
++########################################################################
+ # i = 0 pass
+-#########################################################################
++########################################################################
+ 
+ # register values at loop entry: %TP = tmp, %I = i, %YP = y, %MP = m
+ # %CY < 255 (i.e. only low byte may be != 0)
+@@ -138,7 +138,7 @@ ifdef(`MULREDC_SVOBODA',
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+ 	movq	8(%YP), %rax		# Fetch y[1]
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 	setc	%CYb
+ 	# CY:T1:T0 <= 2*(2^64-1)^2 <= 2^2*128 - 4*2^64 + 2, hence
+ 	# CY:T1 <= 2*2^64 - 4
+@@ -436,9 +436,9 @@ undefine(`TTl')dnl
+ 	setc	%CYb		# %CY <= 1
+ 	movq	%CY, 72(%TP)	# Store CY in tmp[j+1]
+ 
+-#########################################################################
++########################################################################
+ # i > 0 passes
+-#########################################################################
++########################################################################
+ 
+ .p2align 5,,4
+ LABEL_SUFFIX(1)
+@@ -468,7 +468,7 @@ LABEL_SUFFIX(1)
+ 
+ 	mulq	(%MP)			# multipy u*m[0]
+ 	addq	%rax, %T0		# Now %T0 = 0, need not be stored
+-	adcq	%rdx, %T1		# 
++	adcq	%rdx, %T1
+ 
+ 	movq	8(%YP), %rax		# Fetch y[1]
+ 
+-- 
+2.56.0
+
